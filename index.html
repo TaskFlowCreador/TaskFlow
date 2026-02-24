@@ -458,4 +458,596 @@
         <div id="quote-display" class="motivation-quote"></div>
 
         <div class="input-wrapper">
-            <input type="text" id="task-input" placeholder="Escribe una nueva 
+            <input type="text" id="task-input" placeholder="Escribe una nueva tarea..." onkeydown="handleEnter(event)">
+            <div class="color-selector">
+                <div class="color-dot bg-yellow selected" onclick="selectColor('bg-yellow', this)"></div>
+                <div class="color-dot bg-blue" onclick="selectColor('bg-blue', this)"></div>
+                <div class="color-dot bg-green" onclick="selectColor('bg-green', this)"></div>
+                <div class="color-dot bg-pink" onclick="selectColor('bg-pink', this)"></div>
+                <div class="color-dot bg-purple" onclick="selectColor('bg-purple', this)"></div>
+                <div class="color-dot bg-orange" onclick="selectColor('bg-orange', this)"></div>
+                <div class="color-dot bg-cyan" onclick="selectColor('bg-cyan', this)"></div>
+                <div class="color-dot bg-red" onclick="selectColor('bg-red', this)"></div>
+            </div>
+            <button class="add-btn" id="btn-add" onclick="addTask()">+ Agregar</button>
+        </div>
+    </div>
+
+    <div class="board">
+        <div class="column" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)" ondrop="drop(event)">
+            <div class="column-header"><span id="header-todo">Por Hacer</span><span class="count-badge" id="count-todo">0</span></div>
+            <div class="task-list" id="col-todo"></div>
+        </div>
+        <div class="column" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)" ondrop="drop(event)">
+            <div class="column-header"><span id="header-doing">En Progreso</span><span class="count-badge" id="count-doing">0</span></div>
+            <div class="task-list" id="col-doing"></div>
+        </div>
+        <div class="column" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)" ondrop="drop(event)">
+            <div class="column-header"><span id="header-done">Hecho</span><span class="count-badge" id="count-done">0</span></div>
+            <div class="task-list" id="col-done"></div>
+        </div>
+    </div>
+    
+    <div id="toast" class="toast">Guardado automáticamente</div>
+
+    <!-- MODAL DE INFORMACIÓN (TUTORIAL) -->
+    <div id="infoModal" class="modal-overlay" onclick="closeModal(event, 'infoModal')">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModalBtn('infoModal')">&times;</button>
+            <h2 class="modal-title" id="t-info-title">🚀 Bienvenido a Task Flow v1.0</h2>
+            
+            <div class="info-section">
+                <h3 id="t-info-sec1-title">🧠 ¿Qué es Kanban y cómo te ayuda?</h3>
+                <p id="t-info-sec1-desc">Kanban es un método visual que te permite ver tu trabajo avanzar. Evita que te satures y te da una sensación de logro increíble al llevar tareas hasta "Hecho".</p>
+            </div>
+
+            <div class="info-section">
+                <h3 id="t-info-sec2-title">📌 ¿Cómo uso Task Flow?</h3>
+                <ul>
+                    <li id="t-info-use1">➕ <b>Crea:</b> Escribe tu tarea, elige un color y presiona Enter o "Agregar".</li>
+                    <li id="t-info-use2">👆 <b>Mueve:</b> Arrastra y suelta tus notas, o usa el botón ✓ para avanzar.</li>
+                    <li id="t-info-use3">✏️ <b>Edita:</b> Haz doble clic sobre el texto de cualquier nota para corregirlo.</li>
+                </ul>
+            </div>
+
+            <div class="info-section">
+                <h3 id="t-info-sec3-title">💡 Tips Pro de Organización</h3>
+                <ul>
+                    <li id="t-info-pro1">⚡ <b>El Secreto:</b> No tengas más de 3 tareas en "En Progreso" a la vez. ¡Deja de empezar y empieza a terminar!</li>
+                    <li id="t-info-pro2">🧹 <b>Limpieza:</b> Borra las tareas completadas al final de la semana para mantener la mente fresca.</li>
+                </ul>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="add-btn" onclick="closeModalBtn('infoModal')" id="t-info-btn">¡Entendido, a organizar!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DONACIÓN (Solo PayPal) -->
+    <div id="donateModal" class="modal-overlay" onclick="closeModal(event, 'donateModal')">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModalBtn('donateModal')">&times;</button>
+            <h2 class="modal-title" id="t-don-title">❤️ ¡Apoya a Task Flow!</h2>
+            
+            <p class="donate-text" id="t-don-desc">Si esta herramienta te ayuda a organizar tu día y ser más productivo, considera invitarme un café ☕. Tu apoyo directo me ayuda a mantener el proyecto gratuito, pagar los servidores y dedicar tiempo a crear nuevas funciones geniales.</p>
+
+            <div class="payment-box">
+                <h3 style="margin-top:0;">PayPal</h3>
+                <p id="t-don-pp-desc" style="font-size: 0.9rem; opacity: 0.8;">Rápido y seguro con tarjeta o saldo.</p>
+                <a href="https://www.paypal.me/TaskFlowPost" target="_blank" class="paypal-link" id="t-don-pp-btn">Donar con PayPal</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quotesDB = [
+            ["Cree en ti y todo será posible.", "Believe in yourself and anything is possible.", "Acredite em si mesmo e tudo será possível."],
+            ["El éxito es la suma de pequeños esfuerzos repetidos.", "Success is the sum of small efforts repeated.", "O sucesso é a soma de pequenos esforços repetidos."],
+            ["No te detengas hasta que te sientas orgulloso.", "Don't stop until you're proud.", "Não pare até se sentir orgulhoso."],
+            ["La disciplina es el puente entre metas y logros.", "Discipline is the bridge between goals and accomplishment.", "A disciplina é a ponte entre metas e conquistas."],
+            ["Hoy es un buen día para tener un gran día.", "Today is a good day to have a great day.", "Hoje é um bom dia para ter um ótimo dia."],
+            ["Si puedes soñarlo, puedes hacerlo.", "If you can dream it, you can do it.", "Se você pode sonhar, você pode fazer."],
+            ["El mejor momento para empezar es ahora.", "The best time to start is now.", "O melhor momento para começar é agora."],
+            ["Eres más fuerte de lo que piensas.", "You are stronger than you think.", "Você é mais forte do que pensa."],
+            ["La calidad no es un acto, es un hábito.", "Quality is not an act, it is a habit.", "A qualidade não é um ato, é um hábito."],
+            ["El fracaso es solo la oportunidad de comenzar de nuevo.", "Failure is simply the opportunity to begin again.", "O fracasso é apenas a oportunidade de começar de novo."],
+            ["Las grandes cosas nunca vienen de la zona de confort.", "Great things never came from comfort zones.", "Grandes coisas nunca vêm da zona de conforto."],
+            ["Un viaje de mil millas comienza con un solo paso.", "A journey of a thousand miles begins with a single step.", "Uma jornada de mil milhas começa com um único passo."],
+            ["Haz hoy lo que otros no quieren, haz mañana lo que otros no pueden.", "Do today what others won't, do tomorrow what others can't.", "Faça hoje o que os outros não querem, faça amanhã o que os outros não podem."],
+            ["Todo logro comienza con la decisión de intentarlo.", "Every accomplishment starts with the decision to try.", "Toda conquista começa com a decisão de tentar."],
+            ["Gana si puedes, pierde si debes, pero nunca abandones.", "Win if you can, lose if you must, but never quit.", "Vença se puder, perca se dever, mas nunca desista."]
+        ];
+
+        const translations = {
+            es_la: { 
+                todo: "Por Hacer", doing: "En Progreso", done: "Hecho", placeholder: "Escribe una nueva tarea...", add: "+ Agregar", empty: "Nada por aquí...",
+                btnInfo: "❓ Ayuda", btnDonate: "☕ Apoyar", msgSave: "Guardado automáticamente",
+                modalInfoTitle: "🚀 Bienvenido a Task Flow v1.0",
+                modalInfoSec1T: "🧠 ¿Qué es Kanban y cómo te ayuda?",
+                modalInfoSec1D: "Kanban es un método visual que te permite ver tu trabajo avanzar. Evita que te satures y te da una sensación de logro increíble al llevar tareas hasta 'Hecho'.",
+                modalInfoSec2T: "📌 ¿Cómo uso Task Flow?",
+                modalInfoUse1: "➕ <b>Crea:</b> Escribe tu tarea, elige un color y presiona Enter o Agregar.",
+                modalInfoUse2: "👆 <b>Mueve:</b> Arrastra y suelta tus notas, o usa el botón ✓ para avanzar.",
+                modalInfoUse3: "✏️ <b>Edita:</b> Haz doble clic sobre el texto de cualquier nota para corregirlo.",
+                modalInfoSec3T: "💡 Tips Pro de Organización",
+                modalInfoPro1: "⚡ <b>El Secreto:</b> No tengas más de 3 tareas en 'En Progreso' a la vez. ¡Deja de empezar y empieza a terminar!",
+                modalInfoPro2: "🧹 <b>Limpieza:</b> Borra las tareas completadas al final de la semana para mantener la mente fresca.",
+                modalInfoBtn: "¡Entendido, a organizar!",
+                modalDonTitle: "❤️ ¡Apoya a Task Flow!",
+                modalDonDesc: "Si esta herramienta te ayuda a organizar tu día y ser más productivo, considera invitarme un café ☕. Tu apoyo directo me ayuda a mantener el proyecto gratuito, pagar los servidores y dedicar tiempo a crear nuevas funciones geniales.",
+                modalDonPpDesc: "Rápido y seguro con tarjeta o saldo.",
+                modalDonPpBtn: "Donar con PayPal"
+            },
+            es_es: { 
+                todo: "Pendientes", doing: "En Curso", done: "Completadas", placeholder: "Nueva tarea...", add: "+ Añadir", empty: "Lista vacía...",
+                btnInfo: "❓ Ayuda", btnDonate: "☕ Apoyar", msgSave: "Guardado automáticamente",
+                modalInfoTitle: "🚀 Bienvenido a Task Flow v1.0",
+                modalInfoSec1T: "🧠 ¿Qué es Kanban y cómo te ayuda?",
+                modalInfoSec1D: "Kanban es un método visual que te permite ver tu trabajo avanzar. Evita saturarte y te da una sensación de logro al llevar tareas hasta 'Completadas'.",
+                modalInfoSec2T: "📌 ¿Cómo uso Task Flow?",
+                modalInfoUse1: "➕ <b>Crea:</b> Escribe tu tarea, elige un color y presiona Enter.",
+                modalInfoUse2: "👆 <b>Mueve:</b> Arrastra y suelta tus notas, o usa el botón ✓ para avanzar.",
+                modalInfoUse3: "✏️ <b>Edita:</b> Haz doble clic sobre el texto para corregirlo.",
+                modalInfoSec3T: "💡 Consejos Pro de Organización",
+                modalInfoPro1: "⚡ <b>El Secreto:</b> No tengas más de 3 tareas 'En Curso'. ¡Deja de empezar y empieza a terminar!",
+                modalInfoPro2: "🧹 <b>Limpieza:</b> Borra las tareas completadas al final de la semana para mantener la mente fresca.",
+                modalInfoBtn: "¡Entendido, a organizar!",
+                modalDonTitle: "❤️ ¡Apoya a Task Flow!",
+                modalDonDesc: "Si esta herramienta te ayuda a ser más productivo, considera invitarme a un café ☕. Tu apoyo directo me ayuda a mantener el proyecto gratuito y sin anuncios.",
+                modalDonPpDesc: "Rápido y seguro con tarjeta o saldo.",
+                modalDonPpBtn: "Donar con PayPal"
+            },
+            en: { 
+                todo: "To Do", doing: "Doing", done: "Done", placeholder: "Type a new task...", add: "+ Add Task", empty: "No tasks here...",
+                btnInfo: "❓ Help", btnDonate: "☕ Support", msgSave: "Saved automatically",
+                modalInfoTitle: "🚀 Welcome to Task Flow v1.0",
+                modalInfoSec1T: "🧠 What is Kanban?",
+                modalInfoSec1D: "Kanban is a visual method to see your workflow. It prevents burnout and gives you a great sense of achievement when moving tasks to 'Done'.",
+                modalInfoSec2T: "📌 How to use Task Flow?",
+                modalInfoUse1: "➕ <b>Create:</b> Type a task, pick a color, and press Enter.",
+                modalInfoUse2: "👆 <b>Move:</b> Drag and drop notes, or click ✓ to move forward.",
+                modalInfoUse3: "✏️ <b>Edit:</b> Double-click any text to change it.",
+                modalInfoSec3T: "💡 Pro Organization Tips",
+                modalInfoPro1: "⚡ <b>The Secret:</b> Limit 'Doing' to 3 tasks max. Stop starting and start finishing!",
+                modalInfoPro2: "🧹 <b>Clean Up:</b> Delete completed tasks weekly to keep your board fresh.",
+                modalInfoBtn: "Got it, let's go!",
+                modalDonTitle: "❤️ Support Task Flow!",
+                modalDonDesc: "If this tool helps you stay productive, consider buying me a coffee ☕. Your support helps pay for servers and keeping this ad-free.",
+                modalDonPpDesc: "Fast and secure.",
+                modalDonPpBtn: "Donate with PayPal"
+            },
+            pt: { 
+                todo: "A Fazer", doing: "Em Progresso", done: "Concluído", placeholder: "Nova tarefa...", add: "+ Adicionar", empty: "Nada aqui...",
+                btnInfo: "❓ Ajuda", btnDonate: "☕ Apoiar", msgSave: "Salvo automaticamente",
+                modalInfoTitle: "🚀 Bem-vindo ao Task Flow v1.0",
+                modalInfoSec1T: "🧠 O que é Kanban?",
+                modalInfoSec1D: "Kanban é um método visual. Evita a exaustão e dá uma ótima sensação de conquista ao mover tarefas para 'Concluído'.",
+                modalInfoSec2T: "📌 Como usar?",
+                modalInfoUse1: "➕ <b>Criar:</b> Escreva a tarefa, escolha a cor e aperte Enter.",
+                modalInfoUse2: "👆 <b>Mover:</b> Arraste as notas ou use o botão ✓.",
+                modalInfoUse3: "✏️ <b>Editar:</b> Clique duas vezes no texto para modificar.",
+                modalInfoSec3T: "💡 Dicas Pro",
+                modalInfoPro1: "⚡ <b>O Segredo:</b> Máximo de 3 tarefas 'Em Progresso'. Pare de começar, comece a terminar!",
+                modalInfoPro2: "🧹 <b>Limpeza:</b> Apague tarefas concluídas semanalmente.",
+                modalInfoBtn: "Entendido, vamos lá!",
+                modalDonTitle: "❤️ Apoie o Task Flow!",
+                modalDonDesc: "Se esta ferramenta te ajuda a ser mais produtivo, considere me pagar um café ☕. Seu apoio mantém o projeto gratuito e sem anúncios.",
+                modalDonPpDesc: "Rápido e seguro.",
+                modalDonPpBtn: "Doar com PayPal"
+            }
+        };
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag]));
+        }
+
+        let selectedColor = 'bg-yellow';
+        let currentQuoteIndex = 0; 
+
+        function openModal(id) { document.getElementById(id).classList.add('show'); }
+        function closeModalBtn(id) { document.getElementById(id).classList.remove('show'); }
+        function closeModal(event, id) {
+            if (event.target === document.getElementById(id)) {
+                document.getElementById(id).classList.remove('show');
+            }
+        }
+
+        function getRandomQuoteIndex() { return Math.floor(Math.random() * quotesDB.length); }
+        function rotateQuote() {
+            currentQuoteIndex = getRandomQuoteIndex();
+            displayQuote();
+        }
+
+        function saveBoard() {
+            const boardData = {
+                todo: getColumnData('col-todo'),
+                doing: getColumnData('col-doing'),
+                done: getColumnData('col-done'),
+                lang: document.getElementById('lang-select').value,
+                theme: document.body.classList.contains('dark-mode') ? 'dark' : 'light'
+            };
+            localStorage.setItem('taskFlowData', JSON.stringify(boardData));
+        }
+
+        function getColumnData(columnId) {
+            const tasks = [];
+            document.getElementById(columnId).querySelectorAll('.task').forEach(task => {
+                const colorClass = Array.from(task.classList).find(c => c.startsWith('bg-'));
+                const text = task.querySelector('.task-text').innerText;
+                tasks.push({ text: text, color: colorClass || 'bg-yellow' });
+            });
+            return tasks;
+        }
+
+        function setInitialLanguage() {
+            const userLang = navigator.language || navigator.userLanguage; 
+            let targetLang = 'en'; 
+
+            if (userLang.startsWith('es')) {
+                targetLang = userLang === 'es-ES' ? 'es_es' : 'es_la';
+            } else if (userLang.startsWith('pt')) {
+                targetLang = 'pt';
+            }
+            
+            document.getElementById('lang-select').value = targetLang;
+        }
+
+        function loadBoard() {
+            const data = localStorage.getItem('taskFlowData');
+            rotateQuote();
+            setInterval(rotateQuote, 25 * 60 * 1000);
+
+            if (data) {
+                const parsed = JSON.parse(data);
+                if (parsed.theme === 'dark') {
+                    document.body.classList.add('dark-mode');
+                    document.getElementById('theme-btn').innerText = "☀️";
+                }
+                if (parsed.lang) {
+                    document.getElementById('lang-select').value = parsed.lang;
+                } else {
+                    setInitialLanguage();
+                }
+                renderColumn('col-todo', parsed.todo);
+                renderColumn('col-doing', parsed.doing);
+                renderColumn('col-done', parsed.done);
+            } else {
+                setInitialLanguage();
+            }
+            changeLanguage(); 
+            updateCounts();
+        }
+
+        function renderColumn(colId, tasks) {
+            const col = document.getElementById(colId);
+            col.innerHTML = '';
+            if (tasks && tasks.length > 0) {
+                tasks.forEach(t => { col.appendChild(createTaskElement(t.text, t.color)); });
+            }
+        }
+
+        function showToast(icon = '💾') {
+            const lang = document.getElementById('lang-select').value;
+            const toast = document.getElementById('toast');
+            const messages = {
+                '➕': { es_la: '¡Tarea agregada!', es_es: '¡Tarea añadida!', en: 'Task added!', pt: 'Tarefa adicionada!' },
+                '✓':  { es_la: '¡Avanzando! 🚀', es_es: '¡Avanzando! 🚀', en: 'Moving forward! 🚀', pt: 'Avançando! 🚀' },
+                '🗑️': { es_la: 'Tarea eliminada', es_es: 'Tarea eliminada', en: 'Task deleted', pt: 'Tarefa removida' },
+                '💾': { es_la: translations[lang].msgSave, es_es: translations[lang].msgSave, en: translations[lang].msgSave, pt: translations[lang].msgSave }
+            };
+            const msg = messages[icon]?.[lang] || translations[lang].msgSave;
+            toast.innerText = `${icon} ${msg}`;
+            toast.classList.remove('show');
+            void toast.offsetWidth;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2200);
+        }
+
+        function displayQuote() {
+            const lang = document.getElementById('lang-select').value;
+            const quoteEl = document.getElementById('quote-display');
+            quoteEl.classList.add('fading');
+            setTimeout(() => {
+                let langIndex = 0; 
+                if (lang === 'en') langIndex = 1; else if (lang === 'pt') langIndex = 2;
+                quoteEl.innerText = quotesDB[currentQuoteIndex][langIndex];
+                quoteEl.classList.remove('fading');
+            }, 400); 
+        }
+
+        function selectColor(color, el) {
+            selectedColor = color;
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('theme-btn').innerText = isDark ? "☀️" : "🌙";
+            saveBoard();
+        }
+
+        function changeLanguage() {
+            const lang = document.getElementById('lang-select').value;
+            const t = translations[lang];
+            
+            document.getElementById('header-todo').innerText = t.todo;
+            document.getElementById('header-doing').innerText = t.doing;
+            document.getElementById('header-done').innerText = t.done;
+            document.getElementById('task-input').placeholder = t.placeholder;
+            document.getElementById('btn-add').innerText = t.add;
+            document.getElementById('btn-info').innerText = t.btnInfo;
+            document.getElementById('btn-donate').innerText = t.btnDonate;
+            
+            document.getElementById('t-info-title').innerText = t.modalInfoTitle;
+            document.getElementById('t-info-sec1-title').innerText = t.modalInfoSec1T;
+            document.getElementById('t-info-sec1-desc').innerText = t.modalInfoSec1D;
+            document.getElementById('t-info-sec2-title').innerText = t.modalInfoSec2T;
+            document.getElementById('t-info-use1').innerHTML = t.modalInfoUse1;
+            document.getElementById('t-info-use2').innerHTML = t.modalInfoUse2;
+            document.getElementById('t-info-use3').innerHTML = t.modalInfoUse3;
+            document.getElementById('t-info-sec3-title').innerText = t.modalInfoSec3T;
+            document.getElementById('t-info-pro1').innerHTML = t.modalInfoPro1;
+            document.getElementById('t-info-pro2').innerHTML = t.modalInfoPro2;
+            document.getElementById('t-info-btn').innerText = t.modalInfoBtn;
+
+            document.getElementById('t-don-title').innerText = t.modalDonTitle;
+            document.getElementById('t-don-desc').innerText = t.modalDonDesc;
+            document.getElementById('t-don-pp-desc').innerText = t.modalDonPpDesc;
+            document.getElementById('t-don-pp-btn').innerText = t.modalDonPpBtn;
+
+            document.querySelectorAll('.empty-message').forEach(el => el.remove()); 
+            updateEmptyStates(); 
+            displayQuote();
+            saveBoard();
+        }
+
+        function handleEnter(e) { if (e.key === 'Enter') addTask(); }
+
+        function updateCounts() {
+            ['todo', 'doing', 'done'].forEach(id => {
+                const list = document.getElementById('col-' + id);
+                document.getElementById('count-' + id).innerText = list.querySelectorAll('.task').length;
+                updateEmptyStateForColumn(list);
+            });
+        }
+        
+        function updateEmptyStateForColumn(listElement) {
+            const existingMsg = listElement.querySelector('.empty-message');
+            if (existingMsg) existingMsg.remove();
+            if (listElement.querySelectorAll('.task').length === 0) {
+                const lang = document.getElementById('lang-select').value;
+                const msg = document.createElement('div');
+                msg.className = 'empty-message'; msg.innerText = translations[lang].empty;
+                listElement.appendChild(msg);
+            }
+        }
+        function updateEmptyStates() { ['col-todo', 'col-doing', 'col-done'].forEach(id => updateEmptyStateForColumn(document.getElementById(id))); }
+
+        function createTaskElement(text, color) {
+            const task = document.createElement('div');
+            task.className = `task ${color}`; task.draggable = true;
+            task.id = 'task-' + Date.now() + Math.random().toString(16).slice(2);
+            
+            const safeText = escapeHTML(text);
+
+            task.innerHTML = `
+                <span class="task-text" contenteditable="true" 
+                      onkeydown="if(event.key === 'Enter'){ event.preventDefault(); this.blur(); }">${safeText}</span>
+                <div class="task-footer">
+                    <button class="icon-btn check-btn" onclick="moveNext(this)" title="Avanzar">✓</button>
+                    <button class="icon-btn del-btn" onclick="deleteTask(this)" title="Borrar">✕</button>
+                </div>
+            `;
+
+            const textElement = task.querySelector('.task-text');
+            textElement.addEventListener('focus', () => { task.draggable = false; });
+            textElement.addEventListener('blur', () => { 
+                task.draggable = true; 
+                saveBoard(); 
+            });
+
+            task.addEventListener('dragstart', dragStart); task.addEventListener('dragend', dragEnd);
+            addTouchSupport(task);
+            return task;
+        }
+
+        function addTask() {
+            const input = document.getElementById('task-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const todoList = document.getElementById('col-todo');
+            const emptyMsg = todoList.querySelector('.empty-message');
+            if (emptyMsg) emptyMsg.remove();
+            
+            const newTask = createTaskElement(text, selectedColor);
+            newTask.classList.add('task-entering');
+            newTask.addEventListener('animationend', () => newTask.classList.remove('task-entering'), { once: true });
+            todoList.appendChild(newTask);
+            input.value = '';
+            input.focus();
+            
+            updateCounts(); saveBoard(); showToast('➕');
+        }
+
+        function deleteTask(btn) {
+            const task = btn.closest('.task');
+            task.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+            task.style.transform = 'scale(0.4) rotate(15deg) translateY(-20px)';
+            task.style.opacity = '0';
+            setTimeout(() => { task.remove(); updateCounts(); saveBoard(); showToast('🗑️'); }, 300);
+        }
+
+        function moveNext(btn) {
+            const task = btn.closest('.task');
+            const currentListId = task.parentElement.id;
+            let nextListId = currentListId === 'col-todo' ? 'col-doing' : (currentListId === 'col-doing' ? 'col-done' : '');
+
+            if (!nextListId) {
+                // Ya está en "Hecho": efecto shake
+                task.classList.remove('task-shake');
+                void task.offsetWidth; // reflow para reiniciar animación
+                task.classList.add('task-shake');
+                task.addEventListener('animationend', () => task.classList.remove('task-shake'), { once: true });
+                return;
+            }
+
+            task.classList.add('task-moving');
+            task.addEventListener('animationend', () => {
+                task.classList.remove('task-moving');
+                const nextList = document.getElementById(nextListId);
+                const emptyMsg = nextList.querySelector('.empty-message');
+                if (emptyMsg) emptyMsg.remove();
+                nextList.appendChild(task);
+                checkCelebration(nextListId);
+                updateCounts(); saveBoard(); showToast('✓');
+            }, { once: true });
+        }
+
+        let draggedItem = null;
+
+        function dragStart(e) {
+            if (!this.draggable) return; 
+            draggedItem = this; this.classList.add('dragging');
+            setTimeout(() => this.style.opacity = '0.4', 0);
+        }
+        function dragEnd(e) {
+            this.classList.remove('dragging'); this.style.opacity = '1'; draggedItem = null;
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+            const column = e.currentTarget;
+            const list = column.querySelector('.task-list');
+            if (!draggedItem) return;
+
+            const emptyMsg = list.querySelector('.empty-message');
+            if (emptyMsg) emptyMsg.remove();
+
+            const afterElement = getDragAfterElement(list, e.clientY);
+            if (afterElement == null) list.appendChild(draggedItem);
+            else list.insertBefore(draggedItem, afterElement);
+
+            column.classList.add('drag-over');
+        }
+        
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.task:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+                else return closest;
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function leaveDrop(e) { e.currentTarget.classList.remove('drag-over'); }
+
+        function drop(e) {
+            e.preventDefault();
+            const column = e.currentTarget;
+            column.classList.remove('drag-over');
+            const list = column.querySelector('.task-list');
+
+            if (draggedItem) {
+                const emptyMsg = list.querySelector('.empty-message');
+                if (emptyMsg) emptyMsg.remove();
+                draggedItem.style.opacity = '1';
+                checkCelebration(list.id);
+                updateCounts(); saveBoard(); showToast('✓');
+            }
+        }
+
+        /* ---- SOPORTE TÁCTIL (móviles) ---- */
+        let touchClone = null;
+        let touchOffsetX = 0;
+        let touchOffsetY = 0;
+
+        function addTouchSupport(task) {
+            task.addEventListener('touchstart', onTouchStart, { passive: false });
+            task.addEventListener('touchmove', onTouchMove, { passive: false });
+            task.addEventListener('touchend', onTouchEnd, { passive: false });
+        }
+
+        function onTouchStart(e) {
+            // No iniciar drag si el toque es en texto editable o en botones
+            if (e.target.closest('.task-text') || e.target.closest('.icon-btn')) return;
+
+            const touch = e.touches[0];
+            draggedItem = this;
+            this.classList.add('dragging');
+
+            const rect = this.getBoundingClientRect();
+            touchOffsetX = touch.clientX - rect.left;
+            touchOffsetY = touch.clientY - rect.top;
+
+            touchClone = this.cloneNode(true);
+            touchClone.style.cssText = `
+                position: fixed; z-index: 9999; pointer-events: none; opacity: 0.8;
+                width: ${rect.width}px; transform: rotate(2deg) scale(1.05);
+                left: ${touch.clientX - touchOffsetX}px;
+                top: ${touch.clientY - touchOffsetY}px;
+                transition: none;
+            `;
+            document.body.appendChild(touchClone);
+        }
+
+        function onTouchMove(e) {
+            e.preventDefault();
+            if (!touchClone || !draggedItem) return;
+            const touch = e.touches[0];
+
+            touchClone.style.left = (touch.clientX - touchOffsetX) + 'px';
+            touchClone.style.top  = (touch.clientY - touchOffsetY) + 'px';
+
+            touchClone.style.display = 'none';
+            const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+            touchClone.style.display = '';
+
+            const targetList = elementBelow ? elementBelow.closest('.task-list') : null;
+            if (targetList) {
+                const afterEl = getDragAfterElement(targetList, touch.clientY);
+                const emptyMsg = targetList.querySelector('.empty-message');
+                if (emptyMsg) emptyMsg.remove();
+                if (afterEl == null) targetList.appendChild(draggedItem);
+                else targetList.insertBefore(draggedItem, afterEl);
+
+                document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over'));
+                targetList.closest('.column').classList.add('drag-over');
+            }
+        }
+
+        function onTouchEnd(e) {
+            if (touchClone) { touchClone.remove(); touchClone = null; }
+            if (!draggedItem) return;
+
+            draggedItem.classList.remove('dragging');
+            draggedItem.style.opacity = '1';
+
+            const parentList = draggedItem.parentElement;
+            if (parentList && parentList.classList.contains('task-list')) {
+                checkCelebration(parentList.id);
+            }
+            document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over'));
+            draggedItem = null;
+            updateCounts(); saveBoard(); showToast('✓');
+        }
+
+        function checkCelebration(listId) {
+            if (listId === 'col-done') {
+                confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#ff7675', '#fdcb6e', '#55efc4', '#74b9ff'], disableForReducedMotion: true });
+                const doneCol = document.getElementById('col-done').closest('.column');
+                doneCol.classList.add('col-done-glow');
+                doneCol.addEventListener('animationend', () => doneCol.classList.remove('col-done-glow'), { once: true });
+            }
+        }
+    </script>
+</body>
+</html>
+
+
