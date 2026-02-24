@@ -8,7 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
-        /* [Aquí van todos los estilos que ya tenías...] */
         :root {
             --bg-color: #f0f4f8; --text-color: #2d3748; --grid-dot: #cbd5e0;
             --glass-bg: rgba(255, 255, 255, 0.65); --glass-border: 1px solid rgba(255, 255, 255, 0.6);
@@ -25,6 +24,7 @@
             --tape-color: rgba(255, 255, 255, 0.15); --empty-text: #5f6c80;
             --quote-color: #aaa; --modal-bg: rgba(30, 41, 59, 0.95);
         }
+
         * { box-sizing: border-box; transition: background-color 0.4s ease; }
         body {
             font-family: 'Nunito', sans-serif; background-color: var(--bg-color);
@@ -32,124 +32,151 @@
             background-size: 25px 25px; margin: 0; color: var(--text-color); min-height: 100vh;
             display: flex; flex-direction: column;
         }
+
         header {
             padding: 10px 20px; display: grid; grid-template-columns: 1fr auto 1fr;
             align-items: center; background: var(--glass-bg); backdrop-filter: blur(12px);
             border-bottom: var(--glass-border); position: sticky; top: 0; z-index: 1000;
         }
+
         .logo { font-family: 'Indie Flower', cursive; font-size: 2.5rem; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .controls { display: flex; gap: 8px; justify-content: flex-end; }
+        
         .add-task-area { padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        #task-input { padding: 12px 20px; width: 300px; border-radius: 30px; border: 1px solid var(--grid-dot); outline: none; }
+        #task-input { padding: 12px 25px; width: 350px; border-radius: 30px; border: 2px solid var(--grid-dot); outline: none; font-size: 1rem; }
+        
         .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px; flex-grow: 1; }
-        .column { background: var(--glass-bg); border-radius: 20px; padding: 15px; min-height: 400px; display: flex; flex-direction: column; }
-        .column-header { text-align: center; font-weight: 800; margin-bottom: 15px; display: flex; justify-content: center; gap: 10px; }
+        .column { background: var(--glass-bg); border-radius: 20px; padding: 15px; border: var(--glass-border); display: flex; flex-direction: column; min-height: 400px; }
+        .column-header { text-align: center; font-weight: 800; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+
         .task-list { flex-grow: 1; min-height: 200px; }
         .task { 
-            background: #fef3c7; padding: 15px; margin-bottom: 15px; border-radius: 5px; 
-            cursor: grab; font-family: 'Indie Flower', cursive; font-size: 1.2rem;
-            box-shadow: 2px 4px 10px rgba(0,0,0,0.1); position: relative;
+            background: #fef3c7; padding: 20px 15px; margin-bottom: 20px; border-radius: 3px; 
+            cursor: grab; font-family: 'Indie Flower', cursive; font-size: 1.3rem;
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.1); position: relative; transform: rotate(-1deg);
         }
-        .task:active { cursor: grabbing; }
-        .color-dot { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; display: inline-block; margin: 0 2px; }
-        .selected { border: 2px solid black; }
-        .bg-yellow { background: #fef3c7; } .bg-blue { background: #bfdbfe; } .bg-green { background: #bbf7d0; }
-        .add-btn { background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
+        .task::before {
+            content: ''; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+            width: 80px; height: 25px; background: var(--tape-color); opacity: 0.7;
+        }
+
+        .btn-add { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 12px 30px; border-radius: 30px; font-weight: 700; cursor: pointer; }
+
+        /* Estilo para los botones de donación en la esquina */
+        .donate-float { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 2000; }
+        .btn-pay { background: #0070ba; color: white; padding: 10px 20px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 14px; text-align: center; }
+        .binance-box { background: #FCD535; color: black; padding: 8px 15px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+
+        @media (max-width: 768px) { .board { grid-template-columns: 1fr; } #task-input { width: 100%; } }
     </style>
 </head>
-<body>
+<body onload="init()">
 
     <header>
         <div></div>
-        <div class="logo">✨ Task Flow</div>
-        <div class="controls">
-            <button class="add-btn" onclick="toggleTheme()">🌙</button>
+        <div class="logo">✨ Task Flow <span style="font-size: 0.9rem; font-family: 'Nunito';">v1.0</span></div>
+        <div class="controls" style="display:flex; gap:10px;">
+            <button onclick="toggleTheme()" style="background:none; border:none; cursor:pointer; font-size:1.5rem;">🌙</button>
         </div>
     </header>
 
     <div class="add-task-area">
-        <div id="quote-display" class="motivation-quote">"El éxito es la suma de pequeños esfuerzos diarios."</div>
-        <div class="input-wrapper">
-            <input type="text" id="task-input" placeholder="Nueva tarea...">
-            <button class="add-btn" onclick="addTask()">+ Agregar</button>
+        <div id="quote" style="font-family:'Indie Flower'; font-size:1.4rem; color:var(--quote-color);">"Cargando motivación..."</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; width:100%;">
+            <input type="text" id="task-input" placeholder="¿Qué tienes pendiente, Joshua?">
+            <button class="btn-add" onclick="addTask()">+ Agregar</button>
         </div>
     </div>
 
     <div class="board">
-        <div class="column" ondragover="event.preventDefault()" ondrop="drop(event, 'todo')">
+        <div class="column" ondragover="allowDrop(event)" ondrop="drop(event, 'col-todo')">
             <div class="column-header">Por Hacer</div>
-            <div class="task-list" id="todo"></div>
+            <div class="task-list" id="col-todo"></div>
         </div>
-        <div class="column" ondragover="event.preventDefault()" ondrop="drop(event, 'doing')">
+        <div class="column" ondragover="allowDrop(event)" ondrop="drop(event, 'col-doing')">
             <div class="column-header">En Progreso</div>
-            <div class="task-list" id="doing"></div>
+            <div class="task-list" id="col-doing"></div>
         </div>
-        <div class="column" ondragover="event.preventDefault()" ondrop="drop(event, 'done')">
+        <div class="column" ondragover="allowDrop(event)" ondrop="drop(event, 'col-done')">
             <div class="column-header">Hecho</div>
-            <div class="task-list" id="done"></div>
+            <div class="task-list" id="col-done"></div>
         </div>
     </div>
 
-    <div style="position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000;">
-        <a href="https://paypal.me/TU_USUARIO" target="_blank" style="background: #0070BA; color: white; padding: 10px 20px; border-radius: 50px; text-decoration: none; font-weight: bold; font-family: sans-serif;">💙 PayPal</a>
-        <div style="background: #FCD535; padding: 10px; border-radius: 10px; font-size: 10px; font-family: sans-serif;">Binance: TU_BILLETERA_AQUI</div>
+    <div class="donate-float">
+        <a href="https://paypal.me/TU_USUARIO" target="_blank" class="btn-pay">💙 PayPal</a>
+        <div class="binance-box">Binance (USDT): <br> <span style="font-weight:normal;">TU_BILLETERA_AQUI</span></div>
     </div>
 
     <script>
-        // --- LÓGICA DE LA APLICACIÓN ---
+        const quotes = [
+            "El éxito es la suma de pequeños esfuerzos diarios.",
+            "Hazlo hoy, el mañana no está asegurado.",
+            "Un paso a la vez, pero siempre hacia adelante.",
+            "La disciplina le gana al talento tarde o temprano."
+        ];
+
+        function init() {
+            document.getElementById('quote').innerText = '"' + quotes[Math.floor(Math.random()*quotes.length)] + '"';
+            loadData();
+        }
+
         function addTask() {
             const input = document.getElementById('task-input');
-            if (!input.value) return;
-            createTaskCard(input.value, 'todo');
+            if (!input.value.trim()) return;
+            renderTask(input.value, 'col-todo');
             input.value = '';
             saveData();
         }
 
-        function createTaskCard(text, columnId) {
+        function renderTask(text, colId) {
+            const id = 't-' + Date.now();
             const card = document.createElement('div');
             card.className = 'task';
             card.draggable = true;
-            card.innerText = text;
-            card.id = 'task-' + Date.now();
-            card.ondragstart = (e) => e.dataTransfer.setData('text', card.id);
+            card.id = id;
+            card.innerHTML = `<span>${text}</span><button onclick="deleteTask('${id}')" style="position:absolute; top:5px; right:5px; border:none; background:none; cursor:pointer;">❌</button>`;
             
-            // Botón eliminar
-            const delBtn = document.createElement('button');
-            delBtn.innerText = '🗑️';
-            delBtn.style = 'position:absolute; top:5px; right:5px; border:none; background:none; cursor:pointer;';
-            delBtn.onclick = () => { card.remove(); saveData(); };
-            card.appendChild(delBtn);
-
-            document.getElementById(columnId).appendChild(card);
+            card.ondragstart = (e) => e.dataTransfer.setData('text/plain', id);
+            document.getElementById(colId).appendChild(card);
         }
 
-        function drop(e, columnId) {
+        function allowDrop(e) { e.preventDefault(); }
+
+        function drop(e, colId) {
             e.preventDefault();
-            const id = e.dataTransfer.getData('text');
+            const id = e.dataTransfer.getData('text/plain');
             const card = document.getElementById(id);
-            document.getElementById(columnId).appendChild(card);
-            if(columnId === 'done') confetti();
+            document.getElementById(colId).appendChild(card);
+            if(colId === 'col-done') confetti();
             saveData();
         }
 
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
+        function deleteTask(id) {
+            document.getElementById(id).remove();
+            saveData();
         }
+
+        function toggleTheme() { document.body.classList.toggle('dark-mode'); }
 
         function saveData() {
-            const data = {
-                todo: document.getElementById('todo').innerText,
-                doing: document.getElementById('doing').innerText,
-                done: document.getElementById('done').innerText
+            const board = {
+                todo: document.getElementById('col-todo').innerHTML,
+                doing: document.getElementById('col-doing').innerHTML,
+                done: document.getElementById('col-done').innerHTML
             };
-            localStorage.setItem('taskflow_data', JSON.stringify(data));
+            localStorage.setItem('taskflow_v1', JSON.stringify(board));
         }
 
-        // Cargar datos al abrir
-        window.onload = () => {
-            const saved = localStorage.getItem('taskflow_data');
+        function loadData() {
+            const saved = JSON.parse(localStorage.getItem('taskflow_v1'));
             if(saved) {
-                console.log("Datos cargados");
+                document.getElementById('col-todo').innerHTML = saved.todo;
+                document.getElementById('col-doing').innerHTML = saved.doing;
+                document.getElementById('col-done').innerHTML = saved.done;
+                // Re-habilitar eventos de drag en elementos cargados
+                document.querySelectorAll('.task').forEach(t => {
+                    t.ondragstart = (e) => e.dataTransfer.setData('text/plain', t.id);
+                });
             }
         }
     </script>
