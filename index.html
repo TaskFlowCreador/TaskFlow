@@ -48,7 +48,38 @@
             --modal-bg: rgba(30, 41, 59, 0.95);
         }
 
-        * { box-sizing: border-box; transition: background-color 0.4s ease, color 0.3s ease, border-color 0.3s ease; }
+        * { box-sizing: border-box; }
+        body, header, .column, .modal-content, .modal-overlay, select, button, input, .count-badge, .color-dot, .task-footer {
+            transition: background-color 0.4s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* --- ANIMACIONES --- */
+        @keyframes popIn {
+            0%   { transform: scale(0.5) rotate(-3deg); opacity: 0; }
+            70%  { transform: scale(1.08) rotate(1deg); opacity: 1; }
+            100% { transform: scale(1) rotate(-1deg); opacity: 1; }
+        }
+        @keyframes flyRight {
+            0%   { transform: rotate(-1deg) translateX(0) scale(1); opacity: 1; }
+            40%  { transform: rotate(5deg) translateX(60px) scale(1.05); opacity: 0.7; }
+            100% { transform: rotate(0deg) translateX(0) scale(1); opacity: 1; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: rotate(-1deg) translateX(0); }
+            20%       { transform: rotate(1deg) translateX(-6px); }
+            40%       { transform: rotate(-1deg) translateX(6px); }
+            60%       { transform: rotate(1deg) translateX(-4px); }
+            80%       { transform: rotate(-1deg) translateX(4px); }
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: var(--shadow-soft); }
+            50%       { box-shadow: 0 0 30px rgba(255, 215, 0, 0.35), var(--shadow-soft); }
+        }
+
+        .task.task-entering  { animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .task.task-moving    { animation: flyRight 0.4s ease forwards; }
+        .task.task-shake     { animation: shake 0.4s ease; }
+        .col-done-glow       { animation: glow 2s ease-in-out 3; }
 
         body {
             font-family: 'Nunito', sans-serif;
@@ -110,6 +141,9 @@
             font-family: 'Nunito', sans-serif;
             font-size: 0.9rem;
             font-weight: 800;
+            background: none;
+            -webkit-background-clip: unset;
+            -webkit-text-fill-color: var(--accent-color);
             color: var(--accent-color);
             vertical-align: top;
             margin-left: -5px;
@@ -167,9 +201,10 @@
             min-height: 1.5rem;
             max-width: 800px;
             position: relative;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.4s ease, transform 0.4s ease;
             line-height: 1.2;
         }
+        .motivation-quote.fading { opacity: 0; transform: translateY(6px); }
         .motivation-quote::before, .motivation-quote::after {
             content: '"'; color: var(--accent-color); opacity: 0.6;
         }
@@ -318,6 +353,20 @@
 
         .column.drag-over { background: rgba(102, 126, 234, 0.1); border: 2px dashed var(--accent-color); }
 
+        /* Columna "Hecho" con toque especial */
+        #col-done-col { border-top: 3px solid rgba(255, 215, 0, 0.4); }
+
+        .empty-message {
+            text-align: center; color: var(--empty-text); font-style: italic;
+            margin-top: 20%; font-size: 1rem; opacity: 0; pointer-events: none;
+            font-family: 'Indie Flower', cursive; user-select: none;
+            animation: slideUpFade 0.5s forwards;
+        }
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 0.7; transform: translateY(0); }
+        }
+
         /* --- MODALES (Ventanas flotantes) --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -409,42 +458,4 @@
         <div id="quote-display" class="motivation-quote"></div>
 
         <div class="input-wrapper">
-            <input type="text" id="task-input" placeholder="Escribe una nueva tarea..." onkeypress="handleEnter(event)">
-            <div class="color-selector">
-                <div class="color-dot bg-yellow selected" onclick="selectColor('bg-yellow', this)"></div>
-                <div class="color-dot bg-blue" onclick="selectColor('bg-blue', this)"></div>
-                <div class="color-dot bg-green" onclick="selectColor('bg-green', this)"></div>
-                <div class="color-dot bg-pink" onclick="selectColor('bg-pink', this)"></div>
-                <div class="color-dot bg-purple" onclick="selectColor('bg-purple', this)"></div>
-                <div class="color-dot bg-orange" onclick="selectColor('bg-orange', this)"></div>
-                <div class="color-dot bg-cyan" onclick="selectColor('bg-cyan', this)"></div>
-                <div class="color-dot bg-red" onclick="selectColor('bg-red', this)"></div>
-            </div>
-            <button class="add-btn" id="btn-add" onclick="addTask()">+ Agregar</button>
-        </div>
-    </div>
-
-    <div class="board">
-        <div class="column" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)" ondrop="drop(event)">
-            <div class="column-header"><span id="header-todo">Por Hacer</span><span class="count-badge" id="count-todo">0</span></div>
-            <div class="task-list" id="col-todo"></div>
-        </div>
-        <div class="column" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)" ondrop="drop(event)">
-            <div class="column-header"><span id="header-doing">En Progreso</span><span class="count-badge" id="count-doing">0</span></div>
-            <div class="task-list" id="col-doing"></div>
-        </div>
-        <div class="column" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)" ondrop="drop(event)">
-            <div class="column-header"><span id="header-done">Hecho</span><span class="count-badge" id="count-done">0</span></div>
-            <div class="task-list" id="col-done"></div>
-        </div>
-    </div>
-    
-    <div id="toast" class="toast">Guardado automáticamente</div>
-
-    <!-- MODAL DE INFORMACIÓN (TUTORIAL) -->
-    <div id="infoModal" class="modal-overlay" onclick="closeModal(event, 'infoModal')">
-        <div class="modal-content">
-            <button class="close-modal" onclick="closeModalBtn('infoModal')">&times;</button>
-            <h2 class="modal-title" id="t-info-title">🚀 Bienvenido a Task Flow v1.0</h2>
-            
-           
+            <input type="text" id="task-input" placeholder="Escribe una nueva 
